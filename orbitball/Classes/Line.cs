@@ -12,13 +12,23 @@ using FarseerPhysics;
 using FarseerPhysics.Common;
 using FarseerPhysics.Collision.Shapes;
 using FarseerPhysics.Dynamics;
+using FarseerPhysics.Factories;
 
 namespace orbitball
 {
     class Line
     {
+        private Texture2D lineTexture;
+        private Vector2 lineSegmentOrigin;
+
         private Path path;
-        private const int maxLineSegments = 22;
+        private List<Body> bodies;
+        private Body lineBody;
+
+        // NOTE: Subdivisions need +1 line segments
+        private const int maxLineSegments = 23;
+        private int currentLineSegments = 23;
+        private float lineSegmentRadius;
         private const float fadeTime = 1.0f;
 
         public Line()
@@ -26,30 +36,44 @@ namespace orbitball
             //
         }
 
-        public void Initialize(World world)
+        public void Initialize(World world, Texture2D lineTexture)
         {
+            this.lineTexture = lineTexture;
+            this.lineSegmentOrigin = new Vector2(lineTexture.Width / 2, lineTexture.Height / 2);
+
             path = new Path();
-            path.Add(new Vector2(0, 10));
-            path.Add(new Vector2(2.5f, 7.5f));
-            path.Add(new Vector2(10, 9));
-            path.Add(new Vector2(7.5f, 0.5f));
-            path.Add(new Vector2(-2.5f, 7));
+            path.Add(new Vector2(2, 10));
+            path.Add(new Vector2(16, 10));
             path.Closed = false;
 
-            List<Shape> shapes = new List<Shape>(2);
-            shapes.Add(new PolygonShape(PolygonTools.CreateRectangle(0.5f, 0.5f, new Vector2(-0.1f, 0), 0), 1.0f));
-            shapes.Add(new CircleShape(0.5f, 1.0f));
+            // Create path and subdivide bodies
+            this.lineSegmentRadius = ConvertUnits.ToSimUnits(lineTexture.Width) / 2;
+            bodies = PathManager.EvenlyDistributeShapesAlongPath(world, path, new CircleShape(lineSegmentRadius, 1.0f), BodyType.Static, currentLineSegments);
 
-            List<Body> bodies = PathManager.EvenlyDistributeShapesAlongPath(world, path, shapes, BodyType.Dynamic, 20, 1);
-            PathManager.AttachBodiesWithRevoluteJoint(world, bodies, new Vector2(0, 0.5f), new Vector2(0, -0.5f), true, true);
+            this.lineBody = new Body(world);
+            PathManager.ConvertPathToEdges(path, lineBody, currentLineSegments);
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            //spriteBatch.Draw(path, ConvertUnits.ToDisplayUnits(new Vector2(0, 10)), null, Color.ForestGreen, 0.0f, new Vector2(0, 10), 1.0f, SpriteEffects.None, 0.0f);
+            foreach (Body vertex in bodies) 
+            {
+                //path.GetVertices(currentLineSegments)
+                spriteBatch.Draw(lineTexture, ConvertUnits.ToDisplayUnits(vertex.Position), null, Color.White, vertex.Rotation, lineSegmentOrigin, 1.0f, SpriteEffects.None, 0.0f);
+            }
         }
 
         public void Update()
+        {
+            //
+        }
+
+        public void BeginDrawing(Point mousePosition)
+        {
+            //
+        }
+
+        public void EndDrawing(Point mousePosition)
         {
             //
         }

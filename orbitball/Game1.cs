@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Input;
 
 using FarseerPhysics;
 using FarseerPhysics.Dynamics;
+using FarseerPhysics.Factories;
 
 namespace orbitball
 {
@@ -25,6 +26,10 @@ namespace orbitball
 
         Texture2D lineTexture;
 
+        Texture2D testGroundSprite;
+        Body testGround;
+        Vector2 testGroundOrigin;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -32,7 +37,7 @@ namespace orbitball
 
             graphics.IsFullScreen = false;
             graphics.PreferredBackBufferHeight = 800;
-            graphics.PreferredBackBufferWidth = 400;
+            graphics.PreferredBackBufferWidth = 1200;
 
             this.Window.Title = "OrbitBall";
         }
@@ -52,8 +57,8 @@ namespace orbitball
 
             screenCenter = new Vector2(graphics.GraphicsDevice.Viewport.Width / 2f, graphics.GraphicsDevice.Viewport.Height / 2f);
 
-            //world = new World(new Vector2(0.0f, 9.82f));
-            world = new World(new Vector2(0.0f, 1.5f));
+            world = new World(new Vector2(0.0f, 9.82f));
+            //world = new World(new Vector2(0.0f, 1.5f));
             orbitBall = new Ball();
             line = new Line();
 
@@ -73,7 +78,20 @@ namespace orbitball
             // 100px x 100px => 1.5625m x 1.5625m
             Texture2D orbitBallTexture = Content.Load<Texture2D>("Sprites\\ball");
             orbitBall.Initialize(world, orbitBallTexture, ConvertUnits.ToSimUnits(screenCenter) + new Vector2(0, -1.0f * ConvertUnits.ToSimUnits(orbitBallTexture.Height)));
-            line.Initialize(world);
+
+            // Load content for line
+            Texture2D lineTexture = Content.Load<Texture2D>("Sprites\\linesegment");
+            line.Initialize(world, lineTexture);
+
+            // Test ground
+            testGroundSprite = Content.Load<Texture2D>("Sprites\\testgroundsprite");
+            testGroundOrigin = new Vector2(testGroundSprite.Width / 2f, testGroundSprite.Height / 2f);
+
+            Vector2 groundPosition = ConvertUnits.ToSimUnits(screenCenter) + new Vector2(0, 5.0f);
+            testGround = BodyFactory.CreateRectangle(world, ConvertUnits.ToSimUnits(512f), ConvertUnits.ToSimUnits(64f), 1f, groundPosition);
+            testGround.IsStatic = true;
+            testGround.Restitution = 0.3f;
+            testGround.Friction = 0.5f;
         }
 
         /// <summary>
@@ -96,21 +114,39 @@ namespace orbitball
                 Exit();
 
             // TODO: Add your update logic here
-            HandleGamePad();
+            HandleMouse();
             HandleKeyboard();
+            HandleGamePad();
             world.Step((float)gameTime.ElapsedGameTime.TotalMilliseconds * 0.001f);
 
             base.Update(gameTime);
         }
 
-        private void HandleGamePad()
+        private void HandleMouse()
         {
-            // See Farseer HelloWorld project for ideas
+            MouseState mouseState = Mouse.GetState();
+
+            if(mouseState.LeftButton == ButtonState.Pressed)
+            {
+                line.BeginDrawing(mouseState.Position);
+            }
+
+            else if(mouseState.LeftButton == ButtonState.Released)
+            {
+                line.EndDrawing(mouseState.Position);
+            }
         }
 
         private void HandleKeyboard()
         {
             // See Farseer HelloWorld project for ideas
+            KeyboardState keyState = Keyboard.GetState();
+        }
+
+        private void HandleGamePad()
+        {
+            // See Farseer HelloWorld project for ideas
+            GamePadState padState = GamePad.GetState(0);
         }
 
         /// <summary>
@@ -122,21 +158,13 @@ namespace orbitball
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            // Draw background objects first
-            spriteBatch.Begin();
-            spriteBatch.End();
-
-            // Draw foreground objects
             spriteBatch.Begin();
 
-            orbitBall.Draw(spriteBatch);
             line.Draw(spriteBatch);
+            orbitBall.Draw(spriteBatch);
 
-            spriteBatch.End();
+            spriteBatch.Draw(testGroundSprite, ConvertUnits.ToDisplayUnits(testGround.Position), null, Color.White, 0f, testGroundOrigin, 1f, SpriteEffects.None, 0f);
 
-            // Draw debug
-            spriteBatch.Begin();
-            //spriteBatch.DrawString(_font, Text, new Vector2(14.0f, 14.0f), Color.Black);
             spriteBatch.End();
 
             base.Draw(gameTime);
