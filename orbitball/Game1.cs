@@ -23,6 +23,10 @@ namespace orbitball
         World world;
         Ball orbitBall;
         Line line;
+        Wall leftWall;
+        Wall rightWall;
+
+        const float gravity = 15.0f;
 
         Texture2D lineTexture;
 
@@ -40,6 +44,7 @@ namespace orbitball
             graphics.PreferredBackBufferWidth = 1200;
 
             this.Window.Title = "OrbitBall";
+            this.IsMouseVisible = true;
         }
 
         /// <summary>
@@ -57,10 +62,14 @@ namespace orbitball
 
             screenCenter = new Vector2(graphics.GraphicsDevice.Viewport.Width / 2f, graphics.GraphicsDevice.Viewport.Height / 2f);
 
-            world = new World(new Vector2(0.0f, 9.82f));
-            //world = new World(new Vector2(0.0f, 1.5f));
+            // Create world with gravity, ball and line
+            world = new World(new Vector2(0.0f, gravity));
             orbitBall = new Ball();
             line = new Line();
+
+            // Create two walls so OrbitBall doesn't fly off-screen
+            leftWall = new Wall();
+            rightWall = new Wall();
 
             base.Initialize();
         }
@@ -82,6 +91,11 @@ namespace orbitball
             // Load content for line
             Texture2D lineTexture = Content.Load<Texture2D>("Sprites\\linesegment");
             line.Initialize(world, lineTexture);
+
+            // Load content and initialize walls
+            Texture2D wallTexture = Content.Load<Texture2D>("Sprites\\testgroundsprite");
+            leftWall.Initialize(world, wallTexture, new Vector2(5, 7.0f));
+            rightWall.Initialize(world, wallTexture, new Vector2(13, 7.0f));
 
             // Test ground
             testGroundSprite = Content.Load<Texture2D>("Sprites\\testgroundsprite");
@@ -128,12 +142,17 @@ namespace orbitball
 
             if(mouseState.LeftButton == ButtonState.Pressed)
             {
-                line.BeginDrawing(mouseState.Position);
+                if(!line.IsDrawing)
+                {
+                    line.BeginDrawing(world, new Vector2(ConvertUnits.ToSimUnits(mouseState.Position.X), ConvertUnits.ToSimUnits(mouseState.Position.Y)));
+                }
+
+                line.Update(world, new Vector2(ConvertUnits.ToSimUnits(mouseState.Position.X), ConvertUnits.ToSimUnits(mouseState.Position.Y)));
             }
 
             else if(mouseState.LeftButton == ButtonState.Released)
             {
-                line.EndDrawing(mouseState.Position);
+                line.EndDrawing(new Vector2(ConvertUnits.ToSimUnits(mouseState.Position.X), ConvertUnits.ToSimUnits(mouseState.Position.Y)));
             }
         }
 
@@ -160,6 +179,8 @@ namespace orbitball
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
+            leftWall.Draw(spriteBatch);
+            rightWall.Draw(spriteBatch);
             line.Draw(spriteBatch);
             orbitBall.Draw(spriteBatch);
 

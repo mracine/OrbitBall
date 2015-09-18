@@ -46,6 +46,7 @@ namespace orbitball
 
         public bool BallOnCollision(Fixture f1, Fixture f2, Contact contact)
         {
+            //circleBody.ApplyForce(new Vector2(0.0f, 1000.0f));
             return true;
         }
 
