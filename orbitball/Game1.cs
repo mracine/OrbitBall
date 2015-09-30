@@ -181,6 +181,7 @@ namespace orbitball
 
             leftWall.Draw(spriteBatch);
             rightWall.Draw(spriteBatch);
+            line.DrawBorder(spriteBatch);
             line.Draw(spriteBatch);
             orbitBall.Draw(spriteBatch);
 

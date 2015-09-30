@@ -59,6 +59,15 @@ namespace orbitball
             }
         }
 
+        public void DrawBorder(SpriteBatch spriteBatch)
+        {
+            foreach (Body vertex in bodies)
+            {
+                //path.GetVertices(currentLineSegments)
+                spriteBatch.Draw(lineTexture, ConvertUnits.ToDisplayUnits(vertex.Position), null, Color.Black, vertex.Rotation, lineTextureCenter, 1.1f, SpriteEffects.None, 0.0f);
+            }
+        }
+
         public void Update(World world, Vector2 mousePosition)
         {
             // Re-create line if cursor has changed
